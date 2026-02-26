@@ -1,0 +1,29 @@
+{
+  "id": "x402",
+  "name": "x402 OpenClaw Plugin",
+  "description": "A plugin to fetch discovery resources from a specified API endpoint.",
+  "version": "1.0.0",
+  "uiHints": {
+    "enabled": {
+      "label": "Enable Plugin",
+      "help": "Toggle to enable or disable this plugin"
+    },
+    "apiEndpoint": {
+      "label": "API Endpoint",
+      "help": "The endpoint to fetch discovery resources from"
+    }
+  },
+  "skills": ["./skills"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "apiEndpoint": {
+        "type": "string"
+      }
+    }
+  }
+}
