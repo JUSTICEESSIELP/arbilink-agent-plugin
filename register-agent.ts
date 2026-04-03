@@ -82,18 +82,20 @@ async function main() {
   // Register on-chain — encodes the registration file as a data URI (no IPFS needed)
   const txHandle = await agent.registerOnChain();
 
+  console.log(`Tx Hash:  ${txHandle.hash}`);
   console.log("Waiting for transaction confirmation...");
-  const result = await txHandle.wait();
+  const mined = await txHandle.waitMined();
 
   console.log();
   console.log("=== Agent Registered Successfully! ===");
   console.log(`Agent ID: ${agent.agentId}`);
-  console.log(`Tx Hash:  ${result.txHash}`);
+  console.log(`Tx Hash:  ${txHandle.hash}`);
+  console.log(`Block:    ${mined.receipt.blockNumber}`);
   console.log();
 
   const explorer = useSepolia
-    ? `https://sepolia.arbiscan.io/tx/${result.txHash}`
-    : `https://arbiscan.io/tx/${result.txHash}`;
+    ? `https://sepolia.arbiscan.io/tx/${txHandle.hash}`
+    : `https://arbiscan.io/tx/${txHandle.hash}`;
   console.log(`Explorer: ${explorer}`);
   console.log();
   console.log("Registration complete! Your agent is now on the Arbitrum identity registry.");
