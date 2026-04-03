@@ -1,48 +1,57 @@
-import { z } from "zod";
+/**
+ * Configuration for the Arbitrum Agent Plugin.
+ */
 
-// Define the plugin configuration schema
-export const PluginConfigSchema = z.object({
-  enabled: z.boolean().default(true),
-  apiEndpoint: z.string().default("https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources"),
-});
-
-// Define the plugin configuration type
-export type PluginConfig = z.infer<typeof PluginConfigSchema>;
-
-// Resolve the plugin configuration
-export function resolvePluginConfig(value: PluginConfig): PluginConfig {
-  const defaultConfig: PluginConfig = {
-    enabled: true,
-    apiEndpoint: "https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources",
-  };
-
-  if (!value || typeof value !== "object") {
-    return defaultConfig;
-  }
-
-  try {
-    return PluginConfigSchema.parse(value);
-  } catch (error) {
-    console.error("Error parsing plugin config:", error);
-    return defaultConfig;
-  }
+export interface PluginConfig {
+  /** Whether the plugin is enabled */
+  enabled: boolean;
+  /** Arbitrum RPC endpoint (default: public Arbitrum One) */
+  rpcUrl: string;
+  /** Arbitrum Sepolia RPC endpoint */
+  sepoliaRpcUrl: string;
+  /** EIP-8004 Oracle API endpoint for agent identity */
+  oracleEndpoint: string;
+  /** EIP-8004 Identity Registry contract address */
+  registryAddress: string;
+  /** Default chain to use: "arbitrum" | "arbitrum-sepolia" */
+  defaultChain: "arbitrum" | "arbitrum-sepolia";
+  /** Private key for signing transactions (optional, for write operations) */
+  privateKey?: string;
 }
 
-// Validate the plugin configuration
-export function validateConfig(config: PluginConfig) {
-  try {
-    PluginConfigSchema.parse(config);
-    return { valid: true, errors: [] };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        valid: false,
-        errors: error.errors.map((e) => `${e.path.join(".")}: ${e.message}`),
-      };
-    }
-    return {
-      valid: false,
-      errors: ["Unknown validation error"],
-    };
+const DEFAULTS: PluginConfig = {
+  enabled: true,
+  rpcUrl: "https://arb1.arbitrum.io/rpc",
+  sepoliaRpcUrl: "https://sepolia-rollup.arbitrum.io/rpc",
+  oracleEndpoint: "https://oracle.x402endpoints.online",
+  registryAddress: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+  defaultChain: "arbitrum",
+};
+
+export function resolvePluginConfig(partial: Partial<PluginConfig>): PluginConfig {
+  return {
+    ...DEFAULTS,
+    ...partial,
+  };
+}
+
+export interface ConfigValidation {
+  valid: boolean;
+  errors: string[];
+}
+
+export function validateConfig(config: PluginConfig): ConfigValidation {
+  const errors: string[] = [];
+
+  if (!config.rpcUrl && config.defaultChain === "arbitrum") {
+    errors.push("rpcUrl is required when defaultChain is arbitrum");
   }
+  if (!config.sepoliaRpcUrl && config.defaultChain === "arbitrum-sepolia") {
+    errors.push("sepoliaRpcUrl is required when defaultChain is arbitrum-sepolia");
+  }
+  if (!config.registryAddress) {
+    errors.push("registryAddress is required");
+  }
+
+  return { valid: errors.length === 0, errors };
 }

@@ -1,14 +1,16 @@
-import type { PluginRuntime } from "openclaw/plugin-sdk";
+/**
+ * Plugin runtime state management.
+ */
 
-let runtime: PluginRuntime | null = null;
+let _pluginRuntime: any = null;
 
-export function setPluginRuntime(next: PluginRuntime) {
-  runtime = next;
+export function setPluginRuntime(runtime: any): void {
+  _pluginRuntime = runtime;
 }
 
-export function getPluginRuntime(): PluginRuntime {
-  if (!runtime) {
-    throw new Error("Plugin runtime not initialized");
+export function getPluginRuntime(): any {
+  if (!_pluginRuntime) {
+    throw new Error("[arbilink] Plugin runtime not initialized");
   }
-  return runtime;
+  return _pluginRuntime;
 }

@@ -1,59 +1,38 @@
-# X402 Discovery Plugin
+# ArbiLink — Arbitrum Agent Plugin for OpenClaw
 
-A simple OpenClaw plugin that fetches and displays X402 discovery resources.
+An OpenClaw plugin that enables AI agents to interact with the Arbitrum ecosystem. Built for the [ArbiLink Agentic Bounty](https://www.notion.so/33390457c3268053ac0ac5c904c13a3e).
 
 ## Features
 
-- Fetches resources from the X402 discovery API
-- Formats and displays the resources in a readable format
-- Provides a CLI command `x402 discover` to access resources
-- Registers an AI tool for discovery operations
+- **9 AI-accessible tools** for Arbitrum chain interaction
+- **ETH & ERC-20 balances** on Arbitrum One and Sepolia
+- **Gas prices**, block info, and transaction lookups
+- **Arbitrary smart contract reads** via ABI
+- **EIP-8004 Agent Identity** verification and discovery
+- **CLI commands** for all operations
+- **Gateway RPC methods** for programmatic access
 
-## Installation
+## Quick Start
 
-### Option A: Install via OpenClaw (recommended)
-
-```bash
-openclaw plugins install @openclaw/x402
-```
-
-Restart the Gateway afterwards.
-
-### Option B: Copy into your global extensions folder (dev)
-
-On your VPS:
+### Install
 
 ```bash
-mkdir -p ~/.openclaw/extensions
-mkdir -p ~/plugins/
+openclaw plugins install @arbilink/arbitrum-agent-plugin
 ```
 
-On your Local Machine:
+### Configure
 
-```bash
-scp -r "D:\DigitalBenjamins\openclaw-plugin\x402\" trader@46.225.134.170:~/plugins/
-```
-
-On your VPS:
-
-```bash
-cp -R ~/plugins/x402 ~/.openclaw/extensions/
-cd ~/.openclaw/extensions/x402 && npm install
-```
-
-## Configuration
-
-Add the following configuration to your OpenClaw config file (typically `~/.openclaw/config.json` or similar):
+Add to your OpenClaw config:
 
 ```json
 {
   "plugins": {
-    "allow": ["x402"],
+    "allow": ["arbilink"],
     "entries": {
-      "x402": {
+      "arbilink": {
         "config": {
           "enabled": true,
-          "apiEndpoint": "https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources"
+          "defaultChain": "arbitrum"
         }
       }
     }
@@ -61,41 +40,54 @@ Add the following configuration to your OpenClaw config file (typically `~/.open
 }
 ```
 
-Alternatively, you can configure the plugin through the OpenClaw UI if available.
+### Use
 
-## Usage
+The plugin registers 9 tools automatically available to AI agents:
 
-### CLI Command
+| Tool | What it does |
+|---|---|
+| `arbilink_balance` | ETH balance lookup |
+| `arbilink_token_balance` | ERC-20 token balance |
+| `arbilink_gas` | Current gas price |
+| `arbilink_block` | Block information |
+| `arbilink_tx` | Transaction lookup |
+| `arbilink_read_contract` | Read any contract |
+| `arbilink_agent_check` | EIP-8004 agent verification |
+| `arbilink_registry_stats` | Registry statistics |
+| `arbilink_discover_agents` | Discover registered agents |
 
-Run the discover command to fetch and display X402 resources:
+### CLI
 
 ```bash
-openclaw x402 discover
+openclaw arbilink balance 0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18
+openclaw arbilink gas --chain arbitrum-sepolia
+openclaw arbilink agent-check 0x1234...
 ```
 
 ### Gateway RPC
 
-Call the plugin's gateway method:
-
-```javascript
-// Example client code
-const response = await gateway.request("x402.discover", {});
-console.log(response);
+```bash
+openclaw gateway call arbilink.balance '{"address": "0x..."}'
+openclaw gateway call arbilink.gas
+openclaw gateway call arbilink.agent-check '{"address": "0x..."}'
 ```
 
-```
-openclaw gateway call x402.discover
-```
+## EIP-8004 Integration
 
-### AI Tool
+This plugin integrates with the [EIP-8004 Trustless Agents](https://eips.ethereum.org/EIPS/eip-8004) standard via the public oracle at `oracle.x402endpoints.online`. Agents can verify each other's on-chain identity before interacting — enabling trustless agent-to-agent communication on Arbitrum.
 
-The plugin registers a tool that can be used by the AI:
+**Registry contract**: `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`
 
-```
-Tool name: x402_discover
-Parameters:
-- command: String (optional) - Command to execute
-```
+## Tech Stack
+
+- [OpenClaw](https://openclaw.com) plugin SDK
+- [viem](https://viem.sh) for type-safe chain interaction
+- Arbitrum One (chain 42161) + Arbitrum Sepolia (chain 421614)
+- EIP-8004 Oracle API
+
+## Documentation
+
+See [SKILL.md](./SKILL.md) for detailed skill documentation, architecture diagram, and use cases.
 
 ## License
 

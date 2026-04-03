@@ -1,18 +1,28 @@
 {
-  "name": "@openclaw/x402",
-  "version": "0.1.0",
-  "description": "Simple x402 discovery plugin for OpenClaw",
+  "name": "@arbilink/arbitrum-agent-plugin",
+  "version": "1.0.0",
+  "description": "OpenClaw plugin enabling AI agents to interact with Arbitrum — read balances, check gas, query tokens, and interact with smart contracts.",
+  "main": "index.ts",
   "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "arbitrum",
+    "openclaw",
+    "plugin",
+    "ai-agent",
+    "web3",
+    "defi",
+    "wallet"
+  ],
+  "license": "MIT",
   "dependencies": {
-    "@sinclair/typebox": "0.34.48",
-    "zod": "^4.3.6"
+    "@sinclair/typebox": "^0.34.0",
+    "viem": "^2.47.6"
   },
-  "devDependencies": {
+  "peerDependencies": {
     "openclaw": "*"
-  },
-  "openclaw": {
-    "extensions": [
-      "./index.ts"
-    ]
   }
 }
