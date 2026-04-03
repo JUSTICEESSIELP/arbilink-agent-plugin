@@ -3,9 +3,19 @@
 ## Project
 
 - **Name**: ArbiLink — Arbitrum Agent Plugin
-- **Description**: OpenClaw plugin enabling AI agents to interact with Arbitrum — balances, gas, tokens, smart contract reads, and EIP-8004 agent identity verification.
+- **Description**: OpenClaw plugin enabling AI agents to interact with Arbitrum and perform cross-chain transactions via ChainRails — balances, gas, tokens, smart contract reads, EIP-8004 agent identity, cross-chain quotes, bridge routing, and payment intents.
 - **GitHub**: https://github.com/JUSTICEESSIELP/arbilink-agent-plugin
-- **ClawHub**: `arbilink@1.0.0` — https://clawhub.ai/plugins/arbilink
+- **ClawHub**: `arbilink@1.1.0` — https://clawhub.ai/plugins/arbilink
+- **Version**: 1.1.0
+
+## Form Submission Details
+
+- **First Name**: Prince Essiel
+- **Email**: justicessiel@gmail.com
+- **Location**: Ghana
+- **GitHub Account**: https://github.com/JUSTICEESSIELP
+- **Agent Public Endpoint**: https://clawhub.ai/plugins/arbilink
+- **Newsletter**: I'm not interested
 
 ## Agent Registration (EIP-8004)
 
@@ -17,7 +27,9 @@
 - **Method**: Official agent0 SDK (`agent0-sdk`) with `registryOverrides` for Arbitrum chain support
 - **Registration Type**: Fully on-chain (data URI, no IPFS)
 
-## Tools Registered (9 total)
+## Tools Registered (16 total)
+
+### Arbitrum Tools (9 — always available, no config needed)
 
 | Tool | Description |
 |---|---|
@@ -31,14 +43,31 @@
 | `arbilink_registry_stats` | EIP-8004 registry statistics |
 | `arbilink_discover_agents` | Discover registered agents across chains |
 
+### Cross-Chain Tools (7 — requires ChainRails API key)
+
+| Tool | Description |
+|---|---|
+| `arbilink_supported_chains` | List all supported networks |
+| `arbilink_cross_chain_balance` | Balances across all chains at once |
+| `arbilink_cross_chain_quote` | Best quote for cross-chain transfer |
+| `arbilink_find_routes` | Optimal bridge route with fee estimation |
+| `arbilink_supported_bridges` | Available bridges between two chains |
+| `arbilink_create_intent` | Create a cross-chain payment intent |
+| `arbilink_intent_status` | Track payment status |
+
+### Supported Chains (Cross-Chain)
+
+Arbitrum, Ethereum, Base, Polygon, BSC, Avalanche, Optimism, Starknet, Lisk, HyperEVM, Monad + testnets
+
 ## Tech Stack
 
 - **Runtime**: OpenClaw plugin SDK
 - **Chain interaction**: viem (type-safe Ethereum client)
+- **Cross-chain**: @chainrails/sdk (quotes, routes, bridges, payments)
 - **Agent registration**: agent0-sdk (official EIP-8004 SDK)
-- **Chains**: Arbitrum One (42161), Arbitrum Sepolia (421614)
+- **Chains**: Arbitrum One (42161), Arbitrum Sepolia (421614) + 10+ cross-chain networks
 - **Agent identity**: EIP-8004 Oracle API (`oracle.x402endpoints.online`)
-- **Registry contract**: `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` (One) / `0x8004A818BFB912233c491871b3d84c89A494BD9e` (Sepolia)
+- **Registry contracts**: `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` (One) / `0x8004A818BFB912233c491871b3d84c89A494BD9e` (Sepolia)
 
 ## Submission Date
 
