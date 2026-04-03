@@ -1,7 +1,7 @@
 {
   "name": "arbilink",
-  "version": "1.0.1",
-  "description": "OpenClaw plugin enabling AI agents to interact with Arbitrum — read balances, check gas, query tokens, and interact with smart contracts.",
+  "version": "1.1.0",
+  "description": "OpenClaw plugin enabling AI agents to interact with Arbitrum — read balances, check gas, query tokens, read smart contracts, verify agent identity, and perform cross-chain transactions via ChainRails.",
   "type": "module",
   "scripts": {
     "build": "tsc",
@@ -14,10 +14,14 @@
     "ai-agent",
     "web3",
     "defi",
-    "wallet"
+    "wallet",
+    "cross-chain",
+    "chainrails",
+    "bridge"
   ],
   "license": "MIT",
   "dependencies": {
+    "@chainrails/sdk": "^0.3.8",
     "@sinclair/typebox": "0.34.48",
     "viem": "^2.47.6"
   },

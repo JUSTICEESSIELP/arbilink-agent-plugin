@@ -32,7 +32,8 @@ Add to your OpenClaw config:
       "arbilink": {
         "config": {
           "enabled": true,
-          "defaultChain": "arbitrum"
+          "defaultChain": "arbitrum",
+          "chainrailsApiKey": "YOUR_CHAINRAILS_API_KEY"
         }
       }
     }
@@ -42,7 +43,9 @@ Add to your OpenClaw config:
 
 ### Use
 
-The plugin registers 9 tools automatically available to AI agents:
+The plugin registers up to 16 tools automatically available to AI agents:
+
+**Arbitrum Tools (always available)**
 
 | Tool | What it does |
 |---|---|
@@ -55,6 +58,18 @@ The plugin registers 9 tools automatically available to AI agents:
 | `arbilink_agent_check` | EIP-8004 agent verification |
 | `arbilink_registry_stats` | Registry statistics |
 | `arbilink_discover_agents` | Discover registered agents |
+
+**Cross-Chain Tools (requires `chainrailsApiKey`)**
+
+| Tool | What it does |
+|---|---|
+| `arbilink_supported_chains` | List supported networks |
+| `arbilink_cross_chain_balance` | Balances across all chains |
+| `arbilink_cross_chain_quote` | Best quote for cross-chain transfer |
+| `arbilink_find_routes` | Optimal bridge routes |
+| `arbilink_supported_bridges` | Available bridges between chains |
+| `arbilink_create_intent` | Create cross-chain payment |
+| `arbilink_intent_status` | Track payment status |
 
 ### CLI
 

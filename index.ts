@@ -16,6 +16,18 @@ import {
 } from "./src/utils.js";
 import { registerArbiLinkCli } from "./src/cli.js";
 import { setPluginRuntime, getPluginRuntime } from "./src/runtime.js";
+import {
+  initChainRails,
+  getSupportedChains,
+  getCrossChainBalance,
+  getCrossChainQuotes,
+  getBestQuote,
+  findOptimalRoutes,
+  getSupportedBridges,
+  createPaymentIntent,
+  getIntentStatus,
+  AVAILABLE_CHAINS,
+} from "./src/chainrails.js";
 
 // ─── Parameter Schemas ───────────────────────────────────────────────────────
 
@@ -74,6 +86,7 @@ const pluginConfigSchema = {
     sepoliaRpcUrl: { label: "Arbitrum Sepolia RPC", help: "RPC endpoint for Arbitrum Sepolia testnet" },
     defaultChain: { label: "Default Chain", help: '"arbitrum" or "arbitrum-sepolia"' },
     oracleEndpoint: { label: "EIP-8004 Oracle", help: "Agent identity oracle endpoint" },
+    chainrailsApiKey: { label: "ChainRails API Key", help: "API key for cross-chain transactions via ChainRails" },
   },
 };
 
@@ -283,6 +296,159 @@ const arbiLinkPlugin = {
       },
     });
 
+    // ── ChainRails Cross-Chain Tools ──────────────────────────────────────
+
+    if (config.chainrailsApiKey) {
+      initChainRails(config.chainrailsApiKey);
+      api.logger.info("[arbilink] ChainRails cross-chain tools enabled");
+
+      // Tool: Supported Chains
+      api.registerTool({
+        name: "arbilink_supported_chains",
+        label: "Supported Cross-Chain Networks",
+        description: `List all blockchain networks supported for cross-chain transactions. Available chains include: ${AVAILABLE_CHAINS}`,
+        parameters: Type.Object({
+          network: Type.Optional(Type.Union([Type.Literal("mainnet"), Type.Literal("testnet")], { description: '"mainnet" or "testnet"' })),
+        }),
+        async execute(_id: string, params: { network?: "mainnet" | "testnet" }) {
+          try {
+            const chains = await getSupportedChains(params.network);
+            return toolResult(`── Supported Chains ──\n${chains.join(", ")}`, true);
+          } catch (err) {
+            return toolResult(`Error: ${formatError(err)}`, false);
+          }
+        },
+      });
+
+      // Tool: Cross-Chain Balance
+      api.registerTool({
+        name: "arbilink_cross_chain_balance",
+        label: "Cross-Chain Balance",
+        description: "Get token balances for a wallet across all supported chains (Arbitrum, Ethereum, Base, Polygon, etc.).",
+        parameters: Type.Object({
+          address: Type.String({ description: "Wallet address (0x...)" }),
+          network: Type.Optional(Type.Union([Type.Literal("mainnet"), Type.Literal("testnet")], { description: '"mainnet" or "testnet"' })),
+        }),
+        async execute(_id: string, params: { address: string; network?: "mainnet" | "testnet" }) {
+          try {
+            const balance = await getCrossChainBalance(params.address as `0x${string}`, params.network);
+            return toolResult(`── Cross-Chain Balances ──\n${typeof balance === "string" ? balance : JSON.stringify(balance, null, 2)}`, true);
+          } catch (err) {
+            return toolResult(`Error: ${formatError(err)}`, false);
+          }
+        },
+      });
+
+      // Tool: Cross-Chain Quote
+      api.registerTool({
+        name: "arbilink_cross_chain_quote",
+        label: "Cross-Chain Quote",
+        description: `Get the best quote for a cross-chain transfer. Finds optimal bridge and fees. Chains: ${AVAILABLE_CHAINS}`,
+        parameters: Type.Object({
+          sourceChain: Type.String({ description: "Source chain (e.g. ETHEREUM, BASE, POLYGON, ARBITRUM)" }),
+          destinationChain: Type.String({ description: "Destination chain (e.g. ARBITRUM, BASE, ETHEREUM)" }),
+          tokenIn: Type.String({ description: "Input token contract address" }),
+          tokenOut: Type.String({ description: "Output token contract address" }),
+          amount: Type.String({ description: "Amount to transfer" }),
+          recipient: Type.String({ description: "Recipient wallet address" }),
+        }),
+        async execute(_id: string, params: any) {
+          try {
+            const result = await getBestQuote(params);
+            return toolResult(formatResult("Cross-Chain Quote", result), true);
+          } catch (err) {
+            return toolResult(`Error: ${formatError(err)}`, false);
+          }
+        },
+      });
+
+      // Tool: Find Routes
+      api.registerTool({
+        name: "arbilink_find_routes",
+        label: "Find Cross-Chain Routes",
+        description: "Find optimal routes for cross-chain transfers including bridge selection and fee estimation.",
+        parameters: Type.Object({
+          sourceChain: Type.String({ description: "Source chain (e.g. ETHEREUM, BASE, POLYGON)" }),
+          destinationChain: Type.String({ description: "Destination chain (e.g. ARBITRUM)" }),
+          tokenIn: Type.String({ description: "Input token address" }),
+          tokenOut: Type.String({ description: "Output token address" }),
+          amount: Type.String({ description: "Amount to transfer" }),
+        }),
+        async execute(_id: string, params: any) {
+          try {
+            const result = await findOptimalRoutes(params);
+            return toolResult(formatResult("Optimal Route", result), true);
+          } catch (err) {
+            return toolResult(`Error: ${formatError(err)}`, false);
+          }
+        },
+      });
+
+      // Tool: Supported Bridges
+      api.registerTool({
+        name: "arbilink_supported_bridges",
+        label: "Supported Bridges",
+        description: "Check which bridges are available between two chains (ACROSS, CCTP, GATEWAY, RHINOFI).",
+        parameters: Type.Object({
+          sourceChain: Type.String({ description: "Source chain (e.g. ETHEREUM)" }),
+          destinationChain: Type.String({ description: "Destination chain (e.g. ARBITRUM)" }),
+        }),
+        async execute(_id: string, params: { sourceChain: string; destinationChain: string }) {
+          try {
+            const result = await getSupportedBridges(params.sourceChain, params.destinationChain);
+            return toolResult(formatResult("Supported Bridges", result), true);
+          } catch (err) {
+            return toolResult(`Error: ${formatError(err)}`, false);
+          }
+        },
+      });
+
+      // Tool: Create Payment Intent
+      api.registerTool({
+        name: "arbilink_create_intent",
+        label: "Create Cross-Chain Payment",
+        description: "Create a cross-chain payment intent. The sender deposits on the source chain and the recipient receives on the destination chain.",
+        parameters: Type.Object({
+          sender: Type.String({ description: "Sender wallet address" }),
+          recipient: Type.String({ description: "Recipient wallet address" }),
+          amount: Type.String({ description: "Amount in USD" }),
+          tokenIn: Type.String({ description: "Input token address on source chain" }),
+          sourceChain: Type.String({ description: "Source chain (e.g. ETHEREUM, BASE)" }),
+          destinationChain: Type.String({ description: "Destination chain (e.g. ARBITRUM)" }),
+          description: Type.String({ description: "Payment description" }),
+          reference: Type.String({ description: "Payment reference ID" }),
+        }),
+        async execute(_id: string, params: any) {
+          try {
+            const result = await createPaymentIntent(params);
+            return toolResult(formatResult("Payment Intent Created", result), true);
+          } catch (err) {
+            return toolResult(`Error: ${formatError(err)}`, false);
+          }
+        },
+      });
+
+      // Tool: Intent Status
+      api.registerTool({
+        name: "arbilink_intent_status",
+        label: "Payment Intent Status",
+        description: "Check the status of a cross-chain payment intent (PENDING, FUNDED, INITIATED, COMPLETED, EXPIRED).",
+        parameters: Type.Object({
+          intentId: Type.String({ description: "Intent ID to check" }),
+        }),
+        async execute(_id: string, params: { intentId: string }) {
+          try {
+            const result = await getIntentStatus(params.intentId);
+            return toolResult(formatResult("Intent Status", result), true);
+          } catch (err) {
+            return toolResult(`Error: ${formatError(err)}`, false);
+          }
+        },
+      });
+    } else {
+      api.logger.info("[arbilink] ChainRails API key not set — cross-chain tools disabled. Set chainrailsApiKey in config to enable.");
+    }
+
     // ── Gateway Methods ────────────────────────────────────────────────────
 
     api.registerGatewayMethod("arbilink.balance", async ({ params, respond }: GatewayRequestHandlerOptions) => {
@@ -333,9 +499,14 @@ const arbiLinkPlugin = {
           `  Oracle: ${config.oracleEndpoint}`,
           `  Registry: ${config.registryAddress}`,
           "",
-          "Available tools: arbilink_balance, arbilink_token_balance, arbilink_gas,",
-          "  arbilink_block, arbilink_tx, arbilink_read_contract,",
-          "  arbilink_agent_check, arbilink_registry_stats, arbilink_discover_agents",
+          `  ChainRails: ${config.chainrailsApiKey ? "enabled" : "disabled (set chainrailsApiKey to enable)"}`,
+          "",
+          "Arbitrum tools: arbilink_balance, arbilink_token_balance, arbilink_gas,",
+          "  arbilink_block, arbilink_tx, arbilink_read_contract",
+          "Identity tools: arbilink_agent_check, arbilink_registry_stats, arbilink_discover_agents",
+          "Cross-chain tools: arbilink_supported_chains, arbilink_cross_chain_balance,",
+          "  arbilink_cross_chain_quote, arbilink_find_routes, arbilink_supported_bridges,",
+          "  arbilink_create_intent, arbilink_intent_status",
         ].join("\n"),
       }),
     });
@@ -372,7 +543,8 @@ const arbiLinkPlugin = {
       api.logger.info(`[arbilink] message received: ${event.content.substring(0, 100)}`);
     });
 
-    api.logger.info("[arbilink] Plugin initialization complete — 9 tools registered");
+    const toolCount = config.chainrailsApiKey ? 16 : 9;
+    api.logger.info(`[arbilink] Plugin initialization complete — ${toolCount} tools registered`);
   },
 };
 

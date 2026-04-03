@@ -17,6 +17,8 @@ export interface PluginConfig {
   defaultChain: "arbitrum" | "arbitrum-sepolia";
   /** Private key for signing transactions (optional, for write operations) */
   privateKey?: string;
+  /** ChainRails API key for cross-chain transactions (optional) */
+  chainrailsApiKey?: string;
 }
 
 const DEFAULTS: PluginConfig = {
