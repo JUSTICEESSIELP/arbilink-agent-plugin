@@ -1,5 +1,5 @@
 {
-  "name": "@arbilink/arbitrum-agent-plugin",
+  "name": "arbilink",
   "version": "1.0.0",
   "description": "OpenClaw plugin enabling AI agents to interact with Arbitrum — read balances, check gas, query tokens, and interact with smart contracts.",
   "type": "module",
