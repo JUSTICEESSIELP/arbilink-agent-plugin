@@ -1,16 +1,28 @@
 # Changelog
 
-## 0.1.0
+## 1.0.1
+
+### Fixes
+
+- Removed dev-only dependencies (playwright, tsx, agent0-sdk) from plugin package
+- Cleaned up package metadata for ClawHub publishing
+
+## 1.0.0
 
 ### Highlights
 
-- First release of the X402 Discovery plugin.
+- Initial release of ArbiLink — Arbitrum Agent Plugin for OpenClaw.
 
 ### Features
 
-- Basic plugin configuration with API endpoint setting
-- CLI command `x402 discover` to fetch and display resources
-- Gateway method for programmatic access
-- AI tool integration for discovery operations
-- Fetches resources from the X402 discovery API endpoint
-- Formats and displays resources in a readable format
+- 9 AI-accessible tools for Arbitrum chain interaction
+- ETH and ERC-20 token balance lookups on Arbitrum One and Sepolia
+- Gas price and block info queries
+- Transaction lookup by hash
+- Arbitrary smart contract reads via ABI
+- EIP-8004 agent identity verification via oracle API
+- Agent discovery and registry statistics
+- CLI commands for all operations
+- Gateway RPC methods for programmatic access
+- Cross-chain support (Arbitrum One + Sepolia)
+- Registered on Arbitrum Sepolia identity registry (Agent ID: 421614:178)
