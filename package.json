@@ -19,6 +19,8 @@
   "license": "MIT",
   "dependencies": {
     "@sinclair/typebox": "0.34.48",
+    "agent0-sdk": "^1.7.1",
+    "tsx": "^4.21.0",
     "viem": "^2.47.6"
   },
   "devDependencies": {

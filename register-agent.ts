@@ -1,47 +1,38 @@
 /**
- * Register the ArbiLink agent on the Arbitrum identity registry (EIP-8004).
+ * Register the ArbiLink agent on the Arbitrum identity registry using the official agent0 SDK.
  *
  * Usage:
  *   PRIVATE_KEY=0x... npx tsx register-agent.ts [--sepolia]
  *
- * The script will:
- *   1. Upload the agent-registration.json to a public URL (uses GitHub raw URL)
- *   2. Call register(agentURI) on the EIP-8004 IdentityRegistry contract
- *   3. Print the agentId and transaction hash
+ * Uses agent0-sdk with registryOverrides for Arbitrum chain support.
+ * Registers fully on-chain (data URI) — no IPFS needed.
  */
 
-import {
-  createWalletClient,
-  createPublicClient,
-  http,
-  parseAbi,
-  type Address,
-} from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { arbitrum, arbitrumSepolia } from "viem/chains";
+import { SDK } from "agent0-sdk";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 const useSepolia = process.argv.includes("--sepolia");
 
-const REGISTRY_ADDRESS: Address = useSepolia
-  ? "0x8004A818BFB912233c491871b3d84c89A494BD9e" // Arbitrum Sepolia
-  : "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"; // Arbitrum One
+// Arbitrum chain IDs
+const ARBITRUM_ONE_CHAIN_ID = 42161;
+const ARBITRUM_SEPOLIA_CHAIN_ID = 421614;
 
-const chain = useSepolia ? arbitrumSepolia : arbitrum;
+const chainId = useSepolia ? ARBITRUM_SEPOLIA_CHAIN_ID : ARBITRUM_ONE_CHAIN_ID;
+const chainName = useSepolia ? "Arbitrum Sepolia" : "Arbitrum One";
 const rpcUrl = useSepolia
   ? "https://sepolia-rollup.arbitrum.io/rpc"
   : "https://arb1.arbitrum.io/rpc";
 
-// Agent registration file URL (hosted on GitHub)
-const AGENT_URI =
-  "https://raw.githubusercontent.com/JUSTICEESSIELP/arbilink-agent-plugin/main/agent-registration.json";
+// Arbitrum registry addresses (from the hackathon spec)
+const ARBITRUM_ONE_REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432";
+const ARBITRUM_SEPOLIA_REGISTRY = "0x8004A818BFB912233c491871b3d84c89A494BD9e";
+// Reputation registry (same pattern as other chains)
+const ARBITRUM_ONE_REPUTATION = "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63";
+const ARBITRUM_SEPOLIA_REPUTATION = "0x8004B663056A597Dffe9eCcC1965A193B7388713";
 
-// EIP-8004 IdentityRegistry ABI (register function + Registered event)
-const REGISTRY_ABI = parseAbi([
-  "function register(string agentURI) external returns (uint256 agentId)",
-  "event Registered(uint256 indexed agentId, string agentURI, address indexed owner)",
-]);
+const registryAddress = useSepolia ? ARBITRUM_SEPOLIA_REGISTRY : ARBITRUM_ONE_REGISTRY;
+const reputationAddress = useSepolia ? ARBITRUM_SEPOLIA_REPUTATION : ARBITRUM_ONE_REPUTATION;
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
@@ -53,78 +44,68 @@ async function main() {
     process.exit(1);
   }
 
-  const account = privateKeyToAccount(privateKey as `0x${string}`);
-  console.log(`Chain:    ${chain.name}`);
-  console.log(`Registry: ${REGISTRY_ADDRESS}`);
-  console.log(`Wallet:   ${account.address}`);
-  console.log(`AgentURI: ${AGENT_URI}`);
+  console.log(`Chain:    ${chainName} (${chainId})`);
+  console.log(`Registry: ${registryAddress}`);
+  console.log(`RPC:      ${rpcUrl}`);
   console.log();
 
-  const publicClient = createPublicClient({
-    chain,
-    transport: http(rpcUrl),
+  // Initialize agent0 SDK with Arbitrum chain support via overrides
+  const sdk = new SDK({
+    chainId,
+    rpcUrl,
+    privateKey,
+    registryOverrides: {
+      [chainId]: {
+        IDENTITY: registryAddress,
+        REPUTATION: reputationAddress,
+      },
+    },
   });
 
-  const walletClient = createWalletClient({
-    account,
-    chain,
-    transport: http(rpcUrl),
-  });
+  console.log("Creating agent...");
 
-  // Check balance
-  const balance = await publicClient.getBalance({ address: account.address });
-  console.log(`Balance:  ${Number(balance) / 1e18} ETH`);
+  // Create the ArbiLink agent
+  const agent = sdk.createAgent(
+    "ArbiLink",
+    "AI agent plugin enabling interaction with Arbitrum — balances, gas, tokens, smart contract reads, and EIP-8004 agent identity verification. Built as an OpenClaw plugin.",
+    "https://raw.githubusercontent.com/JUSTICEESSIELP/arbilink-agent-plugin/main/agent-registration.json",
+  );
 
-  if (balance === 0n) {
-    console.error("\nError: Wallet has no ETH for gas. Fund it first:");
-    if (useSepolia) {
-      console.error("  Faucet: https://arbitrum.faucet.dev/");
-      console.error("  Faucet: https://faucet.quicknode.com/arbitrum/sepolia");
-    }
-    process.exit(1);
-  }
+  // Configure agent endpoints
+  await agent.setMCP("https://clawhub.ai/plugins/arbilink");
+  agent.setActive(true);
+  agent.setX402Support(true);
+  agent.setTrust(true, false, false); // reputation=true, cryptoEconomic=false, teeAttestation=false
 
-  console.log("\nRegistering agent...");
+  console.log("Registering agent on-chain (fully on-chain data URI)...");
 
-  // Call register(agentURI)
-  const hash = await walletClient.writeContract({
-    address: REGISTRY_ADDRESS,
-    abi: REGISTRY_ABI,
-    functionName: "register",
-    args: [AGENT_URI],
-  });
+  // Register on-chain — encodes the registration file as a data URI (no IPFS needed)
+  const txHandle = await agent.registerOnChain();
 
-  console.log(`Tx hash:  ${hash}`);
-  console.log("Waiting for confirmation...");
+  console.log("Waiting for transaction confirmation...");
+  const result = await txHandle.wait();
 
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  console.log();
+  console.log("=== Agent Registered Successfully! ===");
+  console.log(`Agent ID: ${agent.agentId}`);
+  console.log(`Tx Hash:  ${result.txHash}`);
+  console.log();
 
-  console.log(`Status:   ${receipt.status === "success" ? "SUCCESS" : "FAILED"}`);
-  console.log(`Block:    ${receipt.blockNumber}`);
-  console.log(`Gas used: ${receipt.gasUsed}`);
-
-  // Parse the Registered event to get agentId
-  if (receipt.logs.length > 0) {
-    // The first topic of the Registered event after the event signature is the agentId
-    for (const log of receipt.logs) {
-      if (log.address.toLowerCase() === REGISTRY_ADDRESS.toLowerCase() && log.topics.length >= 2) {
-        const agentId = BigInt(log.topics[1]!);
-        console.log(`\nAgent ID: ${agentId}`);
-        console.log(`\nView on explorer:`);
-        if (useSepolia) {
-          console.log(`  https://sepolia.arbiscan.io/tx/${hash}`);
-        } else {
-          console.log(`  https://arbiscan.io/tx/${hash}`);
-        }
-        break;
-      }
-    }
-  }
-
-  console.log("\nAgent registered successfully!");
+  const explorer = useSepolia
+    ? `https://sepolia.arbiscan.io/tx/${result.txHash}`
+    : `https://arbiscan.io/tx/${result.txHash}`;
+  console.log(`Explorer: ${explorer}`);
+  console.log();
+  console.log("Registration complete! Your agent is now on the Arbitrum identity registry.");
 }
 
 main().catch((err) => {
   console.error("Registration failed:", err.message || err);
+  if (err.message?.includes("insufficient funds")) {
+    console.error();
+    console.error("Your wallet needs ETH for gas. Get testnet ETH from:");
+    console.error("  https://arbitrum.faucet.dev/");
+    console.error("  https://faucet.quicknode.com/arbitrum/sepolia");
+  }
   process.exit(1);
 });
