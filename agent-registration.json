@@ -1,0 +1,22 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "ArbiLink",
+  "description": "AI agent plugin enabling interaction with Arbitrum — balances, gas, tokens, smart contract reads, and EIP-8004 agent identity verification. Built as an OpenClaw plugin for the ArbiLink Agentic Bounty.",
+  "image": "https://raw.githubusercontent.com/JUSTICEESSIELP/arbilink-agent-plugin/main/skills/SKILL.md",
+  "services": [
+    {
+      "name": "web",
+      "endpoint": "https://github.com/JUSTICEESSIELP/arbilink-agent-plugin",
+      "version": "1.0.0"
+    },
+    {
+      "name": "MCP",
+      "endpoint": "https://clawhub.ai/plugins/arbilink",
+      "version": "1.0.0"
+    }
+  ],
+  "x402Support": true,
+  "active": true,
+  "registrations": [],
+  "supportedTrust": ["reputation"]
+}
