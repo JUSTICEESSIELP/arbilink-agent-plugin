@@ -18,7 +18,7 @@
     },
     "defaultChain": {
       "label": "Default Chain",
-      "help": "\"arbitrum\" or \"arbitrum-sepolia\""
+      "help": "arbitrum or arbitrum-sepolia"
     },
     "oracleEndpoint": {
       "label": "EIP-8004 Oracle",
